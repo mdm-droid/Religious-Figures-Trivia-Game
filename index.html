@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sacred Journey: Trivia Quest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a1c2c 0%, #4a192c 100%);
+            color: #fff;
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .title-font { font-family: 'Cinzel', serif; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+        }
+
+        .btn-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+            border-color: #ffd700;
+        }
+
+        .btn-option.correct {
+            background: rgba(34, 197, 94, 0.4);
+            border-color: #22c55e;
+        }
+
+        .btn-option.wrong {
+            background: rgba(239, 68, 68, 0.4);
+            border-color: #ef4444;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ffd700, #ffa500);
+            transition: width 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade { animation: fadeIn 0.5s ease-out; }
+
+        .stat-badge {
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container" class="w-full max-w-2xl px-4 py-8">
+        <!-- Screens will be injected here -->
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="modal-overlay" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
+        <div class="glass p-8 max-w-md w-full text-center">
+            <h2 id="modal-title" class="title-font text-3xl mb-4"></h2>
+            <p id="modal-text" class="text-lg mb-6 text-gray-200"></p>
+            <button onclick="closeModal()" class="px-8 py-3 bg-yellow-500 hover:bg-yellow-400 text-black font-bold rounded-full transition-colors">
+                Continue Journey
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const facts = [
+            // ABRAHAM
+            { figure: "Abraham", q: "What does the name Abraham mean?", options: ["Father of Light", "Father of Nations", "Great Shepherd", "Bringer of Law"], a: 1, fact: "The name Abraham means 'father of nations'." },
+            { figure: "Abraham", q: "Where did Abraham first appear several thousand years ago?", options: ["Jerusalem", "Mecca", "The city of Ur", "Shiraz"], a: 2, fact: "Abraham appeared several thousand years ago in the city of Ur." },
+            { figure: "Abraham", q: "What central spiritual concept did Abraham teach?", options: ["The oneness of God", "The cycles of nature", "Meditation under trees", "The use of battle imagery"], a: 0, fact: "Abraham taught the oneness of God." },
+            { figure: "Abraham", q: "Abraham set out from his native land and reached which Promised Land?", options: ["Egypt", "Persia", "India", "Canaan"], a: 3, fact: "Abraham set out from His native land and reached Canaan, which was the Promised Land." },
+            { figure: "Abraham", q: "Who among these were NOT listed as descendants of Abraham in the document?", options: ["Moses", "Krishna", "The Báb", "Muḥammad"], a: 1, fact: "Among Abraham’s descendants were the Manifestations of God Moses, Muḥammad, the Báb and Bahá’u’lláh." },
+            
+            // MOSES
+            { figure: "Moses", q: "Moses was born to a Hebrew family in which country?", options: ["India", "Persia", "Egypt", "Canaan"], a: 2, fact: "Moses was born to a Hebrew family in Egypt... thousands of years ago." },
+            { figure: "Moses", q: "Where was Moses raised during his youth?", options: ["In a secluded cave", "In the Pharaoh’s palace as a prince", "Among cow herders", "In a mountain temple"], a: 1, fact: "Moses was raised in... the Pharaoh’s palace as a prince." },
+            { figure: "Moses", q: "What happened before the Pharaoh agreed to free the Hebrew people?", options: ["Ten plagues afflicted Egypt", "A great battle occurred", "Moses performed a miracle at the Bodhi tree", "A conversation with Arjuna"], a: 0, fact: "Ten plagues afflicted Egypt before... the Pharaoh agreed to free the Hebrew people." },
+            { figure: "Moses", q: "Which Holy Book contains the laws and teachings brought by Moses?", options: ["The Avesta", "The Qu'rán", "The Torah", "The Tripitaka"], a: 2, fact: "The laws and teachings brought by Moses are recorded in... a Holy Book called the Torah." },
+            { figure: "Moses", q: "Which of these is one of the Ten Commandments mentioned?", options: ["To walk the middle path", "To practice selfless service", "Not to speak dishonestly", "To fast for 40 days"], a: 2, fact: "Some of the Ten Commandments are... to honor one’s father and mother, not to steal, not to murder, and not to speak dishonestly." },
+            
+            // KRISHNA
+            { figure: "Krishna", q: "Where did Krishna grow up after being saved by his parents?", options: ["In a royal estate", "In a village among cow herders", "In the mountains of Persia", "In the city of Mecca"], a: 1, fact: "Krishna’s parents saved Him when He was born by taking Him to a village where He grew up among cow herders." },
+            { figure: "Krishna", q: "Krishna revealed his teachings for a new age in a conversation with whom?", options: ["Peter", "Mullá Ḥusayn", "Arjuna", "John the Baptist"], a: 2, fact: "Krishna revealed the teachings for a new age in a conversation with Arjuna." },
+            { figure: "Krishna", q: "How did Krishna try to resolve conflict at all times?", options: ["By physical force", "By peaceful means", "By retreating to mountains", "By ignoring the conflict"], a: 1, fact: "Krishna tried at all times to resolve conflict by peaceful means." },
+            { figure: "Krishna", q: "Why did Krishna use the imagery of battle in his teachings?", options: ["To encourage physical war", "To show that effort is needed to acquire heavenly perfections", "To explain his royal birth", "To honor his ancestors"], a: 1, fact: "Krishna used the imagery of battle to help the people understand that effort is needed to acquire heavenly perfections." },
+            { figure: "Krishna", q: "Which Holy Book contains the teachings of Krishna?", options: ["The Bhagavad Gita", "The Torah", "The Tripitaka", "The Avesta"], a: 0, fact: "The Bhagavad Gita is a Holy Book that contains the teachings of Krishna." },
+            
+            // BUDDHA
+            { figure: "Buddha", q: "At what age did Buddha leave the royal estate to find an end to suffering?", options: ["20 years old", "22 years old", "29 years old", "30 years old"], a: 2, fact: "Buddha was twenty-nine years of age when He left the royal estate in search of an end to suffering." },
+            { figure: "Buddha", q: "Under what tree did Buddha sit when he received knowledge from God?", options: ["The Cedar Tree", "The Bodhi Tree", "The Olive Tree", "The Fig Tree"], a: 1, fact: "Buddha received from God the knowledge of all things as He sat under the Bodhi Tree." },
+            { figure: "Buddha", q: "What does the title 'The Buddha' mean?", options: ["The King of Peace", "The Awakened or Enlightened One", "The Messenger of Light", "The Teacher of Law"], a: 1, fact: "The Buddha means the 'Awakened One' or the 'Enlightened One'." },
+            { figure: "Buddha", q: "What kind of path did Buddha teach people to walk?", options: ["One of extreme physical pleasure", "One of complete rejection of enjoyment", "A path that avoids extremes", "A path of silent meditation only"], a: 2, fact: "Buddha taught people to walk a path that avoids the extremes of indulgence in physical pleasures and complete rejection of all physical enjoyment." },
+            { figure: "Buddha", q: "In which record are the Buddhist teachings found?", options: ["The Tripitaka", "The Avesta", "The Qu'rán", "The Torah"], a: 0, fact: "The Buddhist teachings are recorded in the Tripitaka." },
+            
+            // ZOROASTER
+            { figure: "Zoroaster", q: "Where was Zoroaster born some three thousand years ago?", options: ["India", "Persia", "Egypt", "Arabia"], a: 1, fact: "Zoroaster was born in Persia some three thousand years ago." },
+            { figure: "Zoroaster", q: "At what age did Zoroaster go to the mountains to pray and meditate?", options: ["20 years old", "29 years old", "30 years old", "45 years old"], a: 0, fact: "At the age of twenty, Zoroaster went to a secluded place in the mountains where He prayed and meditated." },
+            { figure: "Zoroaster", q: "Which King accepted Zoroaster's teachings and helped others see the truth?", options: ["Pharaoh", "Arjuna", "Vishtaspa", "Peter"], a: 2, fact: "King Vishtaspa accepted Zoroaster’s teachings and helped many others to see the truth of His Message." },
+            { figure: "Zoroaster", q: "What three-part statement sums up a central teaching of Zoroaster?", options: ["Love, Joy, Peace", "Good thoughts, Good words, Good deeds", "Prayer, Service, Study", "Faith, Hope, Charity"], a: 1, fact: "A central teaching of Zoroaster is summed up in the statement 'Good thoughts, good words, good deeds'." },
+            { figure: "Zoroaster", q: "What is the name of the Holy Book where Zoroaster's words are recorded?", options: ["The Torah", "The Tripitaka", "The Qu'rán", "The Avesta"], a: 3, fact: "The words and deeds of Zoroaster are recorded in a Holy Book called the Avesta, which means 'knowledge'." },
+
+            // JESUS
+            { figure: "Jesus Christ", q: "Where was Jesus Christ born?", options: ["Jerusalem", "Bethlehem", "Mecca", "Nazareth"], a: 1, fact: "Jesus Christ was born in Bethlehem." },
+            { figure: "Jesus Christ", q: "Who prepared the people for the coming of Jesus?", options: ["Peter", "John the Baptist", "Mary Magdalene", "Mullá Ḥusayn"], a: 1, fact: "John the Baptist prepared the people for the coming of Jesus." },
+            { figure: "Jesus Christ", q: "In what form did Jesus teach many of His lessons?", options: ["Scientific laws", "Long poems", "Parables", "Battle strategies"], a: 2, fact: "Jesus taught many of His lessons in the form of parables." },
+            { figure: "Jesus Christ", q: "Which follower helped strengthen the faith of the apostles after Jesus passed?", options: ["Peter", "John the Baptist", "Mary Magdalene", "Zoroaster"], a: 2, fact: "After the passing of Jesus, Mary Magdalene helped to strengthen the faith of the apostles." },
+            { figure: "Jesus Christ", q: "What were two main concepts Jesus taught the importance of?", options: ["Wealth and Power", "Knowledge and Skill", "Love and Forgiveness", "Strength and Victory"], a: 2, fact: "Jesus taught the importance of love and forgiveness." },
+
+            // MUHAMMAD
+            { figure: "Muhammad", q: "In what year was Muḥammad born in the city of Mecca?", options: ["1819 AD", "1844 AD", "570 AD", "3000 BC"], a: 2, fact: "Muḥammad was a Manifestation of God born in the city Mecca... in the year 570 AD." },
+            { figure: "Muhammad", q: "What titles was Muḥammad often referred to while working as a merchant?", options: ["The King and Prince", "The Truthful and Trustworthy", "The Wise and Ancient", "The Brave and Strong"], a: 1, fact: "While engaged as a merchant, Muḥammad was often referred to as 'The Truthful' and 'The Trustworthy'." },
+            { figure: "Muhammad", q: "Where did Muḥammad and his followers go when they were persecuted in Mecca?", options: ["Shiraz", "Jerusalem", "Medina", "Bethlehem"], a: 2, fact: "Muḥammad and His followers were persecuted by the people of Mecca and went to Medina." },
+            { figure: "Muhammad", q: "What is the name of the Holy Book where the words of Muḥammad are recorded?", options: ["The Qu'rán", "The Torah", "The Bhagavad Gita", "The Tripitaka"], a: 0, fact: "The words of Muḥammad are recorded in a Holy Book called the Qu’rán." },
+            { figure: "Muhammad", q: "What was one major result of Muḥammad’s Message?", options: ["It divided the tribes", "It united the Arabian tribes and raised their civilization", "It caused people to move to the mountains", "It ended the search for suffering"], a: 1, fact: "Muḥammad’s Message united the Arabian tribes and raised their level of civilization." },
+
+            // THE BAB
+            { figure: "The Báb", q: "When did the Báb declare His Mission in the city of Shíráz?", options: ["May 23, 1844", "October 20, 1819", "January 1, 1850", "May 23, 1819"], a: 0, fact: "The Báb declared His Mission in 1844, on the eve of 23 May... in the city of Shíráz in Persia." },
+            { figure: "The Báb", q: "What does the word 'Báb' mean?", options: ["Light", "Gate", "Path", "Friend"], a: 1, fact: "The word 'báb' means 'gate'." },
+            { figure: "The Báb", q: "Who was the first person to recognize the Báb?", options: ["Quddús", "Peter", "Mullá Ḥusayn", "Arjuna"], a: 2, fact: "Mullá Ḥusayn was the first to recognize the Báb." },
+            { figure: "The Báb", q: "What were the first eighteen people to believe in the Báb called?", options: ["The Apostles", "The Letters of the Living", "The Gatekeepers", "The Truthful Ones"], a: 1, fact: "The first eighteen people to believe in the Báb were called the 'Letters of the Living'." },
+            { figure: "The Báb", q: "Who was the last of the 'Letters of the Living', accepting at age twenty-two?", options: ["Mullá Ḥusayn", "Vishtaspa", "Quddús", "Bahá’u’lláh"], a: 2, fact: "Quddús was the last of the Letters of the Living; he was twenty-two years old when he accepted the Báb." }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let lives = 3;
+        let isAnswering = false;
+
+        const container = document.getElementById('game-container');
+        const overlay = document.getElementById('modal-overlay');
+        const modalTitle = document.getElementById('modal-title');
+        const modalText = document.getElementById('modal-text');
+
+        function init() {
+            showStartScreen();
+        }
+
+        function showStartScreen() {
+            container.innerHTML = `
+                <div class="glass p-10 text-center animate-fade">
+                    <h1 class="title-font text-5xl mb-6 text-yellow-400">Sacred Journey</h1>
+                    <p class="text-xl mb-8 text-gray-300">Embark on a trivia quest through history and faith. Answer every question correctly to master the Sacred Journey.</p>
+                    <div class="flex flex-col gap-4 max-w-xs mx-auto">
+                        <button onclick="startGame()" class="px-8 py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xl rounded-full transition-all transform hover:scale-105">
+                            Begin Quest
+                        </button>
+                        <p class="text-sm text-gray-400">Master all facts from the Religious Figures study guide.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function startGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            lives = 3;
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            if (currentQuestionIndex >= facts.length) {
+                showWinScreen();
+                return;
+            }
+
+            isAnswering = false;
+            const item = facts[currentQuestionIndex];
+            const progress = (currentQuestionIndex / facts.length) * 100;
+
+            container.innerHTML = `
+                <div class="mb-6 flex justify-between items-center">
+                    <div class="flex gap-2">
+                        <span class="stat-badge text-yellow-400">Realm: ${item.figure}</span>
+                        <span class="stat-badge text-blue-400">Q: ${currentQuestionIndex + 1}/${facts.length}</span>
+                    </div>
+                    <div class="flex gap-1">
+                        ${'❤️'.repeat(lives)}
+                    </div>
+                </div>
+                
+                <div class="progress-bar mb-8">
+                    <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+
+                <div class="glass p-8 animate-fade">
+                    <h2 class="text-2xl font-semibold mb-8 leading-relaxed">${item.q}</h2>
+                    <div class="grid grid-cols-1 gap-4">
+                        ${item.options.map((opt, idx) => `
+                            <button onclick="handleAnswer(${idx})" id="opt-${idx}" class="btn-option p-5 text-left rounded-xl text-lg">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function handleAnswer(index) {
+            if (isAnswering) return;
+            isAnswering = true;
+
+            const item = facts[currentQuestionIndex];
+            const isCorrect = index === item.a;
+
+            const btn = document.getElementById(`opt-${index}`);
+            if (isCorrect) {
+                btn.classList.add('correct');
+                score++;
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    renderQuestion();
+                }, 800);
+            } else {
+                btn.classList.add('wrong');
+                document.getElementById(`opt-${item.a}`).classList.add('correct');
+                lives--;
+                
+                setTimeout(() => {
+                    if (lives <= 0) {
+                        showGameOver();
+                    } else {
+                        showModal("Incorrect Insight", item.fact);
+                    }
+                }, 500);
+            }
+        }
+
+        function showModal(title, text) {
+            modalTitle.innerText = title;
+            modalText.innerText = text;
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function closeModal() {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            currentQuestionIndex++;
+            renderQuestion();
+        }
+
+        function showGameOver() {
+            container.innerHTML = `
+                <div class="glass p-10 text-center animate-fade">
+                    <h1 class="title-font text-5xl mb-6 text-red-500">Journey Interrupted</h1>
+                    <p class="text-xl mb-8">You have run out of lives, but the path to knowledge is always open.</p>
+                    <div class="text-2xl mb-8">Final Progress: ${Math.round((currentQuestionIndex / facts.length) * 100)}%</div>
+                    <button onclick="startGame()" class="px-8 py-4 bg-white text-black font-bold text-xl rounded-full hover:bg-gray-200 transition-all">
+                        Try Again
+                    </button>
+                </div>
+            `;
+        }
+
+        function showWinScreen() {
+            container.innerHTML = `
+                <div class="glass p-10 text-center animate-fade">
+                    <h1 class="title-font text-5xl mb-6 text-yellow-400">Master of Realms</h1>
+                    <p class="text-xl mb-8 text-gray-200">Congratulations! You have successfully completed the Sacred Journey and mastered every fact of the Manifestations of God.</p>
+                    <div class="bg-yellow-500/20 p-6 rounded-2xl mb-8">
+                        <div class="text-4xl font-bold text-yellow-400 mb-2">100% Complete</div>
+                        <div class="text-gray-300">You answered all ${facts.length} questions correctly!</div>
+                    </div>
+                    <button onclick="startGame()" class="px-8 py-4 bg-yellow-500 text-black font-bold text-xl rounded-full hover:bg-yellow-400 transition-all">
+                        Restart Quest
+                    </button>
+                </div>
+            `;
+        }
+
+        init();
+    </script>
+</body>
+</html>
