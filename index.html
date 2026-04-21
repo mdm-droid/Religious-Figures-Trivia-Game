@@ -51,6 +51,13 @@
             border-color: #ef4444;
         }
 
+        .btn-option.hinted {
+            opacity: 0.3;
+            pointer-events: none;
+            text-decoration: line-through;
+            filter: grayscale(1);
+        }
+
         .progress-bar {
             height: 8px;
             background: rgba(255, 255, 255, 0.1);
@@ -159,6 +166,7 @@
         let currentQuestionIndex = 0;
         let score = 0;
         let lives = 5;
+        let hintsRemaining = 3;
         let isAnswering = false;
 
         const container = document.getElementById('game-container');
@@ -189,6 +197,7 @@
             currentQuestionIndex = 0;
             score = 0;
             lives = 5;
+            hintsRemaining = 3;
             renderQuestion();
         }
 
@@ -204,9 +213,12 @@
 
             container.innerHTML = `
                 <div class="mb-6 flex justify-between items-center">
-                    <div class="flex gap-2">
+                    <div class="flex flex-wrap gap-2">
                         <span class="stat-badge text-yellow-400">Realm: ${item.figure}</span>
                         <span class="stat-badge text-blue-400">Q: ${currentQuestionIndex + 1}/${facts.length}</span>
+                        <button onclick="useHint()" id="hint-btn" class="stat-badge ${hintsRemaining > 0 ? 'bg-yellow-500/20 text-yellow-200 hover:bg-yellow-500/40' : 'opacity-50 text-gray-400'} transition-all">
+                            💡 Insights: ${hintsRemaining}
+                        </button>
                     </div>
                     <div class="flex gap-1">
                         ${'❤️'.repeat(lives)}
@@ -228,6 +240,46 @@
                     </div>
                 </div>
             `;
+        }
+
+        function useHint() {
+            if (hintsRemaining <= 0 || isAnswering) return;
+
+            const item = facts[currentQuestionIndex];
+            const incorrectIndices = [];
+            
+            // Find all incorrect options
+            item.options.forEach((_, idx) => {
+                if (idx !== item.a) incorrectIndices.push(idx);
+            });
+
+            // Randomly pick 2 incorrect options to remove
+            const toRemove = [];
+            while (toRemove.length < 2 && incorrectIndices.length > 0) {
+                const randomIndex = Math.floor(Math.random() * incorrectIndices.length);
+                toRemove.push(incorrectIndices.splice(randomIndex, 1)[0]);
+            }
+
+            // Apply hinted style
+            toRemove.forEach(idx => {
+                const btn = document.getElementById(`opt-${idx}`);
+                if (btn) btn.classList.add('hinted');
+            });
+
+            hintsRemaining--;
+            renderQuestionWithHints(toRemove);
+        }
+
+        // Helper to keep the UI state after using a hint without full re-render
+        function renderQuestionWithHints(removedIndices) {
+            const hintBtn = document.getElementById('hint-btn');
+            hintBtn.innerText = `💡 Insights: ${hintsRemaining}`;
+            if (hintsRemaining <= 0) hintBtn.classList.add('opacity-50', 'text-gray-400');
+            
+            removedIndices.forEach(idx => {
+                const btn = document.getElementById(`opt-${idx}`);
+                if (btn) btn.classList.add('hinted');
+            });
         }
 
         function handleAnswer(index) {
