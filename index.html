@@ -270,7 +270,6 @@
             renderQuestionWithHints(toRemove);
         }
 
-        // Helper to keep the UI state after using a hint without full re-render
         function renderQuestionWithHints(removedIndices) {
             const hintBtn = document.getElementById('hint-btn');
             hintBtn.innerText = `💡 Insights: ${hintsRemaining}`;
@@ -331,7 +330,8 @@
                 <div class="glass p-10 text-center animate-fade">
                     <h1 class="title-font text-5xl mb-6 text-red-500">Journey Interrupted</h1>
                     <p class="text-xl mb-8">You have run out of lives, but the path to knowledge is always open.</p>
-                    <div class="text-2xl mb-8">Final Progress: ${Math.round((currentQuestionIndex / facts.length) * 100)}%</div>
+                    <div class="text-2xl mb-8">Final Progress: ${Math.round((score / facts.length) * 100)}%</div>
+                    <div class="text-lg text-gray-400 mb-8">Correct Answers: ${score} / ${facts.length}</div>
                     <button onclick="startGame()" class="px-8 py-4 bg-white text-black font-bold text-xl rounded-full hover:bg-gray-200 transition-all">
                         Try Again
                     </button>
@@ -340,13 +340,14 @@
         }
 
         function showWinScreen() {
+            const percentage = Math.round((score / facts.length) * 100);
             container.innerHTML = `
                 <div class="glass p-10 text-center animate-fade">
                     <h1 class="title-font text-5xl mb-6 text-yellow-400">Master of Realms</h1>
-                    <p class="text-xl mb-8 text-gray-200">Congratulations! You have successfully completed the Sacred Journey and mastered every fact of the Manifestations of God.</p>
+                    <p class="text-xl mb-8 text-gray-200">Congratulations! You have successfully completed the Sacred Journey and mastered the facts of the Manifestations of God.</p>
                     <div class="bg-yellow-500/20 p-6 rounded-2xl mb-8">
-                        <div class="text-4xl font-bold text-yellow-400 mb-2">100% Complete</div>
-                        <div class="text-gray-300">You answered all ${facts.length} questions correctly!</div>
+                        <div class="text-4xl font-bold text-yellow-400 mb-2">${percentage}% Complete</div>
+                        <div class="text-gray-300">You answered ${score} out of ${facts.length} questions correctly!</div>
                     </div>
                     <button onclick="startGame()" class="px-8 py-4 bg-yellow-500 text-black font-bold text-xl rounded-full hover:bg-yellow-400 transition-all">
                         Restart Quest
